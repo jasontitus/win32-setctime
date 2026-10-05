@@ -82,3 +82,16 @@ def test_invalid_file_handle_is_not_closed(monkeypatch, api):
     with pytest.raises(OSError):
         _setctime.setctime("test.txt", 0)
     assert api == []
+
+
+def test_setfiletime_exception_closes_handle(monkeypatch, api):
+    original_error = RuntimeError("SetFileTime call failed")
+
+    def fail(*args):
+        raise original_error
+
+    monkeypatch.setattr(_setctime, "SetFileTime", fail)
+    with pytest.raises(RuntimeError) as error:
+        _setctime.setctime("test.txt", 0)
+    assert error.value is original_error
+    assert api == [42]
